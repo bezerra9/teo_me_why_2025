@@ -69,4 +69,7 @@ arvore.fit(X_train, y_train)
 feature_importances = (pd.Series(arvore.feature_importances_, index=X_train.columns).sort_values(ascending=False).reset_index())
 
 feature_importances['acum.'] = feature_importances[0].cumsum()
-feature_importances[feature_importances[0]>0.01]
+#feature_importances[feature_importances[0]>0.01] # ou
+feature_importances[feature_importances['acum.'] < 0.96]
+
+# Explicação -> usamos o `arvore.feature_importances_` para verificar quais variaveis contribuiram mais com as 'quebras' da minha arvore, transformamos isso em uma series e ordenamos em ordem crescente, apos isso aplicamos o metodo `cumsum()` que vai acumular as features_importances da arvore e vai nos dar até mais ou menos que ponto as variaveis utilizadas pela arvore durante a quebra podem nos ajudar no nosso modelo final. Não sei até que ponto isso se difere de uma plotagem de heatmap para verificar a correlação de algumas variaveis
