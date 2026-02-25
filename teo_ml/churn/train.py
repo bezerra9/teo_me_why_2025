@@ -73,3 +73,72 @@ feature_importances['acum.'] = feature_importances[0].cumsum()
 feature_importances[feature_importances['acum.'] < 0.96]
 
 # Explicação -> usamos o `arvore.feature_importances_` para verificar quais variaveis contribuiram mais com as 'quebras' da minha arvore, transformamos isso em uma series e ordenamos em ordem crescente, apos isso aplicamos o metodo `cumsum()` que vai acumular as features_importances da arvore e vai nos dar até mais ou menos que ponto as variaveis utilizadas pela arvore durante a quebra podem nos ajudar no nosso modelo final. Não sei até que ponto isso se difere de uma plotagem de heatmap para verificar a correlação de algumas variaveis
+
+
+# %%
+best_features = (feature_importances[feature_importances['acum.'] < 0.96]['index'].tolist())
+best_features
+
+
+# %%
+# MODIFY
+from feature_engine import discretisation
+
+tree_discretization = discretisation.DecisionTreeDiscretiser(variables=best_features,       regression=False, bin_output='bin_number', cv=3)
+#Estou usando arvore para criar os bins no meu dataset
+X_train.head()
+
+tree_discretization.fit(X_train[best_features], y_train)
+# %%
+X_train_transform = tree_discretization.transform(X_train[best_features])
+
+X_train_transform
+
+
+# %%
+# Model
+from sklearn import linear_model
+
+reg = linear_model.LogisticRegression(penalty=None, max_iter=1000000, random_state=42)
+reg.fit(X_train_transform, y_train)
+
+
+# %%
+from sklearn import metrics
+
+y_train_predict = reg.predict(X_train_transform)
+y_train_proba = reg.predict_proba(X_train_transform)[:, 1]
+
+acc_train = metrics.accuracy_score(y_train, y_train_predict)
+auc_train = metrics.roc_auc_score(y_train, y_train_proba)
+print('Acuracia Treino: ', acc_train)
+print('AUC Treino: ', auc_train)
+
+
+# %%
+X_test_transform = tree_discretization.transform(X_test[best_features])
+X_test_transform
+
+y_test_predict = reg.predict(X_test_transform)
+y_test_proba = reg.predict_proba(X_test_transform)[:, 1]
+
+acc_test = metrics.accuracy_score(y_test, y_test_predict)
+auc_test = metrics.roc_auc_score(y_test, y_test_proba)
+print('Acuracia teste: ', acc_test)
+print('AUC teste: ', auc_test)
+
+
+# %%
+oot_transform = tree_discretization.transform(oot[best_features])
+
+
+y_oot_predict = reg.predict(oot_transform)
+y_oot_proba = reg.predict_proba(oot_transform)[:, 1]
+
+acc_oot = metrics.accuracy_score(oot[target], y_oot_predict)
+auc_oot = metrics.roc_auc_score(oot[target], y_oot_proba)
+print('Acuracia oot: ', acc_oot)
+print('AUC oot: ', auc_oot)
+
+
+# %%
