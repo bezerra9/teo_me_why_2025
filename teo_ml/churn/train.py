@@ -99,23 +99,34 @@ onehot = encoding.OneHotEncoder(variables=best_features, ignore_format=True)
 
 
 # %%
-# Model
-from sklearn import linear_model
-from sklearn import naive_bayes
+# MODEL
+#from sklearn import linear_model
+#from sklearn import naive_bayes
 from sklearn import ensemble
 
 #model = naive_bayes.BernoulliNB() # Bernoulli pq minhas variaveis agora são todas onehot
 #model = linear_model.LogisticRegression(penalty=None, max_iter=1000000, random_state=42)
-#model = ensemble.RandomForestClassifier(random_state=42, min_samples_leaf=20, n_jobs=-1, n_estimators=500)
-model = ensemble.AdaBoostClassifier(random_state=42, n_estimators=500, learning_rate=0.99)
+model = ensemble.RandomForestClassifier(random_state=42, n_jobs=-2)
+#model = ensemble.AdaBoostClassifier(random_state=42, n_estimators=500, learning_rate=0.99)
+
+
+# Para poder mostrar em qual step do pipeline está o modelo coloca-se Model__
+params = {
+  'min_samples_leaf': [15,20,25,30,50],
+  'n_estimators': [100,200,500,1000],
+  'criterion': ['gini', 'entropy', 'log_loss']
+}
+
+grid = model_selection.GridSearchCV(model, params, cv=3, scoring='roc_auc', verbose=3)
 
 model_pipeline = pipeline.Pipeline(
   steps=[
     ('Discretizar', tree_discretization),
     ('Onehot', onehot),
-    ('Model', model)
+    ('Grid', grid)
   ]
 )
+
 import mlflow
 from sklearn import metrics
 
@@ -124,10 +135,10 @@ mlflow.set_experiment(experiment_name='churn_exp')
 mlflow.sklearn.autolog()
 with mlflow.start_run():
 
-  model_pipeline.fit(X_train[best_features], y_train)
+  grid.fit(X_train[best_features], y_train)
 
-  y_train_predict = model_pipeline.predict(X_train[best_features])
-  y_train_proba = model_pipeline.predict_proba(X_train[best_features])[:, 1]
+  y_train_predict = grid.predict(X_train[best_features])
+  y_train_proba = grid.predict_proba(X_train[best_features])[:, 1]
 
   acc_train = metrics.accuracy_score(y_train, y_train_predict)
   auc_train = metrics.roc_auc_score(y_train, y_train_proba)
@@ -136,8 +147,8 @@ with mlflow.start_run():
   print('AUC Treino: ', auc_train)
 # ----------------------------------------
 
-  y_test_predict = model_pipeline.predict(X_test[best_features])
-  y_test_proba = model_pipeline.predict_proba(X_test[best_features])[:, 1]
+  y_test_predict = grid.predict(X_test[best_features])
+  y_test_proba = grid.predict_proba(X_test[best_features])[:, 1]
 
   acc_test = metrics.accuracy_score(y_test, y_test_predict)
   auc_test = metrics.roc_auc_score(y_test, y_test_proba)
@@ -146,8 +157,8 @@ with mlflow.start_run():
   print('AUC teste: ', auc_test)
 # ----------------------------------------
 
-  y_oot_predict = model_pipeline.predict(oot[best_features])
-  y_oot_proba = model_pipeline.predict_proba(oot[best_features])[:, 1]
+  y_oot_predict = grid.predict(oot[best_features])
+  y_oot_proba = grid.predict_proba(oot[best_features])[:, 1]
 
   acc_oot = metrics.accuracy_score(oot[target], y_oot_predict)
   auc_oot = metrics.roc_auc_score(oot[target], y_oot_proba)
@@ -180,4 +191,5 @@ plt.legend([
 ])
 # a curva deve ficar proximas umas das outras e proximas de 100
 
+plt.show()
 # %%
