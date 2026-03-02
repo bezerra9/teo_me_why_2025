@@ -88,7 +88,7 @@ from feature_engine import discretisation, encoding
 from sklearn import pipeline
 
 # Discretização
-tree_discretization = discretisation.DecisionTreeDiscretiser(variables=best_features,       regression=False, bin_output='bin_number', cv=3)
+tree_discretization = discretisation.DecisionTreeDiscretiser(variables=best_features, regression=False, bin_output='bin_number', cv=3)
 #transforma variaveis continuas em bins(intervalos)
 #Estou usando arvore para criar os bins no meu dataset
 
@@ -133,6 +133,7 @@ from sklearn import metrics
 mlflow.set_tracking_uri('http://127.0.0.1:5000')
 mlflow.set_experiment(experiment_name='churn_exp')
 mlflow.sklearn.autolog()
+
 with mlflow.start_run():
 
   grid.fit(X_train[best_features], y_train)
@@ -168,7 +169,7 @@ with mlflow.start_run():
 # ----------------------------------------
   mlflow.log_metrics({
     'acc_train':acc_train,
-    'auc_train':acc_train,
+    'auc_train':auc_train,
     'acc_test':acc_test,
     'auc_test':auc_test,
     'acc_oot':acc_oot,
