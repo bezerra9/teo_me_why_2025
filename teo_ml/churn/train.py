@@ -194,3 +194,10 @@ plt.legend([
 
 plt.show()
 # %%
+model_df = pd.Series({
+  'model': model_pipeline,
+  'features': best_features
+} 
+)
+
+model_df.to_pickle('model.pkl')
